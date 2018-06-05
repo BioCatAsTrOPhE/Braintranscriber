@@ -39,7 +39,9 @@ int main(int argc, const char * argv[]) {
         TR = 0x10000000,
     };
     int mode = BF | IN;
-    
+    char* code;
+    bool from_file = false;
+
     // No arguments given, just output info
     if(argc == 1) {
         std::cout << "Braintranscriber (1.1)\n";
@@ -63,20 +65,29 @@ int main(int argc, const char * argv[]) {
             if(!strcmp(argv[a], "-t"))
                 mode = (mode | TR) & ~IN; else
             if(!strcmp(argv[a], "-f")) {
+		from_file = true;
                 std::ifstream ifile(argv[argc-1]);
                 if(!ifile) {
-                    std::cout << "File not found: " << argv[argc-1] << std::endl;
+                    std::cout << "File not found: " << code << std::endl;
                     return -1;
                 }
-                argv[argc-1] = std::string{(std::istreambuf_iterator<char>(ifile)), std::istreambuf_iterator<char>()}.c_str();
+		std::string string_code((std::istreambuf_iterator<char>(ifile)), std::istreambuf_iterator<char>());
+		code = (char *) malloc(sizeof(char)*(string_code.length()+1));
+		strcpy(code, string_code.c_str());
             } else
             std::cout << "Unrecognized argument: " << argv[a] << std::endl;
         }
-        // Brainfuck mode
+	if(!from_file)
+	{
+	    code = (char *) malloc(sizeof(char)*(strlen(argv[argc-1])+1));
+	    strcpy(code, argv[argc-1]);
+	}
+        
+	// Brainfuck mode
         if(mode & BF) {
-            const char* pc {argv[argc-1]};
-            const char* pm {argv[argc-1]+strlen(argv[argc-1])};
-            // Translate Brainfuck to Ook!
+            const char* pc {code};
+            const char* pm {code+strlen(code)};
+	    // Translate Brainfuck to Ook!
             if(mode & TR) {
                 for(; pc < pm; ++pc) {
                     switch(*pc) {
@@ -150,8 +161,8 @@ int main(int argc, const char * argv[]) {
         }
         // Ook! mode
         else if(mode & OO) {
-            const char* pc {argv[argc-1]};
-            const char* pm {argv[argc-1]+strlen(argv[argc-1])-9};
+            const char* pc {code};
+            const char* pm {code+strlen(code)-9};
             // Translate Ook! to Brainfuck
             if(mode & TR) {
                 for(; pc < pm; pc+=9) {
